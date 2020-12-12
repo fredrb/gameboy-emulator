@@ -1,0 +1,17 @@
+boot_rom_enabled = true
+boot_rom_path = "res/bootrom/dmg_boot.bin"
+
+# Debugger:
+debug_enabled = true
+
+# Logger:
+logger_enabled = true
+logger_file = true
+logger_file_prefix = "./tmp"
+
+logger_flag_tick = true
+logger_flag_memory_save = true
+logger_memory_fetch = true
+logger_vram_save = true
+logger_decoding = true
+logger_snapshot = true
