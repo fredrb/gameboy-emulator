@@ -93,6 +93,11 @@ impl Registers {
     self.set_8bit(code, byte)
   }
 
+  pub fn inc_pc(&mut self) {
+    let current_value = self.get_16bit(&RegCode::PC).wrapping_add(1);
+    self.pc = current_value as usize;
+  }
+
   pub fn inc_hl(&mut self) {
     let current_value = self.get_16bit(&RegCode::HL).wrapping_add(1);
     self.set_flag(&Flag::HalfCarryFlagBCD, current_value & 0xFF == 0);

@@ -69,9 +69,16 @@ impl Logger {
     self.open_file.write_all(String::from(format!("{}\n", msg)).as_bytes());
   }
 
+  fn log_terminal(&mut self, msg: String) {
+    println!("{}", msg);
+  }
+
   fn process_message(&mut self, msg: LogMessage) {
     match msg.0 {
       // LogEvents::VramSave => println!("{}", msg.1),
+      LogEvents::Tick => self.log_terminal(msg.1),
+      LogEvents::MemoryFetch => self.log_terminal(msg.1),
+      LogEvents::MemorySave => self.log_terminal(msg.1),
       _ => ()
     };
   }

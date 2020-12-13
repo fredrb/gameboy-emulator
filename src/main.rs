@@ -1,7 +1,6 @@
 mod external;
 mod cpu;
 mod mmu;
-mod opcodes;
 mod reg;
 mod gameboy;
 mod gb_config;

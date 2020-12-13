@@ -1,5 +1,5 @@
 use crate::debug::logger::LogMessage;
-use crate::cpu::CPU;
+use crate::cpu::cpu::CPU;
 use crate::mmu::VirtualMemory;
 use crate::gb_config::gb_config;
 use crate::external::cartridge::Cartridge;
