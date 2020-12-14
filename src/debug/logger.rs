@@ -22,6 +22,8 @@ pub enum LogEvents {
   Decoding,
   Snapshot,
   Exit,
+  DebugLoggerOn,
+  DebugLoggerOff,
   Register,
 }
 
@@ -37,6 +39,7 @@ pub struct Logger {
   chin: Sender<LogMessage>,
 
   open_file: File,
+  debug_logger: bool,
 }
 
 impl Logger {
@@ -48,7 +51,8 @@ impl Logger {
       cfg,
       chin,
       chout,
-      open_file
+      open_file,
+      debug_logger: false,
     }
   }
 
@@ -73,12 +77,20 @@ impl Logger {
     println!("{}", msg);
   }
 
+  fn print_debug(&mut self, msg: String) {
+    if self.debug_logger {
+      println!("{}", msg);
+    }
+  }
+
   fn process_message(&mut self, msg: LogMessage) {
     match msg.0 {
-      // LogEvents::VramSave => println!("{}", msg.1),
-      LogEvents::Tick => self.log_terminal(msg.1),
-      LogEvents::MemoryFetch => self.log_terminal(msg.1),
-      LogEvents::MemorySave => self.log_terminal(msg.1),
+      LogEvents::VramSave => self.print_debug(msg.1),
+      LogEvents::Tick => self.print_debug(msg.1),
+      LogEvents::MemoryFetch => self.print_debug(msg.1),
+      LogEvents::MemorySave => self.print_debug(msg.1),
+      LogEvents::DebugLoggerOn => self.debug_logger = true,
+      LogEvents::DebugLoggerOff => self.debug_logger = false,
       _ => ()
     };
   }

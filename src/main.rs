@@ -8,7 +8,6 @@ mod debug;
 
 use std::env;
 use external::cartridge::{self, Cartridge};
-use crate::debug::logger::LogEvents;
 
 fn main() {
   let args: Vec<String> = env::args().collect();
@@ -23,7 +22,7 @@ fn main() {
   let client = logger.make_client();
 
   let mut gb = gameboy::Gameboy::new(cfg, client);
-  
+
   let logger_thread = std::thread::spawn(move || {
     loop {
       match logger.poll_message() {

@@ -22,7 +22,7 @@ pub enum RegCode {
   DE,
   HL
 }
-  pub struct Registers {
+pub struct Registers {
   pub a: u8,
   pub f: u8,
   pub b: u8,

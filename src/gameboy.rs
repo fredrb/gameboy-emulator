@@ -1,10 +1,10 @@
-use crate::debug::logger::LogMessage;
+use crate::debug::{debugger::Debuggable, gb_debugger::DebuggerState};
+use crate::debug::{input::DebuggerInput, logger::LogMessage, ui::Terminal};
 use crate::cpu::cpu::CPU;
 use crate::mmu::VirtualMemory;
 use crate::gb_config::gb_config;
 use crate::external::cartridge::Cartridge;
 use crate::external::boot_rom_loader;
-use crate::reg::RegCode;
 use crate::debug::logger::{LoggerClient, LogEvents, LoggableComponent};
 
 pub struct Gameboy {
@@ -12,18 +12,12 @@ pub struct Gameboy {
   pub mmu: VirtualMemory,
   pub cfg: gb_config,
   pub cartridge: Option<Cartridge>,
+  pub terminal: Terminal,
+  pub input: DebuggerInput,
+  pub state: DebuggerState,
 
   logger_client: LoggerClient,
 }
-
-// pub struct StateChange<T,V> {
-//   state_type: T,
-//   new_value: V
-// }
-
-// trait StateChangeable<T,V> {
-//   fn apply_state(&mut self, entry: &StateChange<T,V>);
-// }
 
 pub trait ExternalHook {
   fn when_started(gb: &mut Gameboy);
@@ -31,18 +25,15 @@ pub trait ExternalHook {
   fn after_tick(gb: &mut Gameboy);
 }
 
-// impl StateChangeable<RegCode,u8> for Gameboy {
-//   fn apply_state(&mut self, c: &StateChange<RegCode,u8>) {
-
-//   }
-// }
-
 impl Gameboy {
   pub fn new(cfg: gb_config, logger_client: LoggerClient) -> Self {
     Gameboy {
       cpu: CPU::new(false),
       mmu: VirtualMemory::new(),
       cartridge: None,
+      terminal: Terminal::new(8),
+      input: DebuggerInput::new(),
+      state: DebuggerState::new(),
       cfg,
       logger_client
     }
@@ -69,18 +60,37 @@ impl Gameboy {
 
   pub fn start(&mut self) {
     self.logger_client.send((LogEvents::Initializing, String::from("Starting GB main loop")));
+    if self.cfg.debug_mode {
+      self.state.breakpoints.push(self.cfg.initial_breakpoint);
+      self.on_started();
+    }
+
     loop {
+      if self.cfg.debug_mode {
+        if self.should_stop(self.cpu.reg.pc as u16) {
+          self.on_breakpoint(self.cpu.reg.pc as u16);
+          // self.state.break_next = false;
+          // self.state.log_next = false;
+          if self.state.log_next {
+            self.logger_client.send((LogEvents::DebugLoggerOn, String::from("Debug logger on")));
+          } else {
+            self.logger_client.send((LogEvents::DebugLoggerOff, String::from("Debug logger off")));
+          }
+        }
+      }
+
       let mut messages: Vec<LogMessage> = vec!();
       self.cpu.tick(&mut self.mmu);
       messages.extend(self.cpu.dump_log_messages());
       messages.extend(self.mmu.dump_log_messages());
+
       for m in messages {
         self.logger_client.send(m);
       }
 
-      for s in self.cpu.reg.print_registers() {
-        self.logger_client.send((LogEvents::Register, format!("\t[REG] {}", s)));
-      }
+      // for s in self.cpu.reg.print_registers() {
+      //   self.logger_client.send((LogEvents::Register, format!("\t[REG] {}", s)));
+      // }
     }
   }
 }

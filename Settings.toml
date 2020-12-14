@@ -3,9 +3,11 @@ boot_rom_path = "res/bootrom/dmg_boot.bin"
 
 # Debugger:
 debug_enabled = true
+debug_initial_breakpoint = 0
+# @TODO: default breakpoints
 
 # Logger:
-logger_enabled = true
+logger_enabled = false
 logger_file = true
 logger_file_prefix = "./tmp"
 

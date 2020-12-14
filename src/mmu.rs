@@ -25,7 +25,7 @@ use std::{thread, time};
 // }
 
 pub struct VirtualMemory {
-  data: Vec<u8>,
+  pub data: Vec<u8>,
   message_buffer: Vec<LogMessage>
 }
 

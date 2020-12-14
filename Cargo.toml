@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 config = "0.10"
+console = "0.13.0"
+hex = "0.4.2"

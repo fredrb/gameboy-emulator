@@ -221,7 +221,7 @@ impl OpcodeDecoder<'_> {
       0xF1 => self.pop(RegCode::BC),
 
       0xCB => {
-
+        
       }
       // 0xCB => self.prefixed_opcode(bus),
       _ => ()
