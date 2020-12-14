@@ -1,16 +1,5 @@
 use crate::{reg::RegCode, reg::{Flag}};
-use crate::cpu::decoder::OpcodeDecoder;
-
-enum BitMasks {
-  Bit1 = 0b1,
-  Bit2 = 0b10,
-  Bit3 = 0b100,
-  Bit4 = 0b1000,
-  Bit5 = 0b10000,
-  Bit6 = 0b100000,
-  Bit7 = 0b1000000,
-  Bit8 = 0b10000000,
-}
+use crate::cpu::decoder::{OpcodeDecoder,BitMasks};
 
 pub trait Load<D,S> {
   fn ld(&mut self, dest: D, source: S);
@@ -33,6 +22,10 @@ pub trait IncDec<S> {
   fn dec(&mut self, source: S);
 }
 
+pub trait Xor<S> {
+  fn xor(&mut self, source: S);
+}
+
 pub trait Rotate {
   fn rl(&mut self, r: RegCode);
   fn rlc(&mut self, r: RegCode);
@@ -47,6 +40,10 @@ pub trait Stack {
   fn call(&mut self, condition: bool, next: usize);
   fn push(&mut self, reg: RegCode);
   fn pop(&mut self, reg: RegCode);
+}
+
+pub trait BitCheck {
+  fn check_bit(&mut self, reg: RegCode, mask: u8);
 }
 
  /********************************************************************
@@ -140,6 +137,28 @@ impl LoadHigh<usize,RegCode> for OpcodeDecoder<'_> {
   }
 }
 
+impl Xor<RegCode> for OpcodeDecoder<'_> {
+  fn xor(&mut self, code: RegCode) {
+    let mut v = self.reg.get_8bit(&code);
+    v = self.reg.a ^ v;
+    self.reg.set_flag(&Flag::Zero, v == 0);
+    self.reg.set_flag(&Flag::HalfCarryFlagBCD, false);
+    self.reg.set_flag(&Flag::AddSubBCD, false);
+    self.reg.set_8bit(&RegCode::A, v);
+  }
+}
+
+impl Xor<usize> for OpcodeDecoder<'_> {
+  fn xor(&mut self, addr: usize) {
+    let mut v = self.bus.fetch(addr);
+    v = self.reg.a ^ v;
+    self.reg.set_flag(&Flag::Zero, v == 0);
+    self.reg.set_flag(&Flag::HalfCarryFlagBCD, false);
+    self.reg.set_flag(&Flag::AddSubBCD, false);
+    self.reg.set_8bit(&RegCode::A, v);
+  }
+}
+
 impl IncDec<RegCode> for OpcodeDecoder<'_> {
   fn inc(&mut self, source: RegCode) {
     self.reg.inc_8bit(&source);
@@ -177,7 +196,7 @@ impl IncDec<usize> for OpcodeDecoder<'_> {
 impl Rotate for OpcodeDecoder<'_> {
   fn rl(&mut self, r: RegCode) {
     let c = self.reg.get_8bit(&r);
-    let mc = c & (BitMasks::Bit8) as u8;
+    let mc = c & (BitMasks::Bit7) as u8;
     let new_value = (self.reg.get_8bit(&r) << 1) | mc;
     
     self.reg.set_flag(&Flag::CarryFlag, mc != 0);
@@ -190,7 +209,7 @@ impl Rotate for OpcodeDecoder<'_> {
 
   fn rlc(&mut self, r: RegCode) {
     let c = self.reg.get_8bit(&r);
-    let mc = c & (BitMasks::Bit8) as u8;
+    let mc = c & (BitMasks::Bit7) as u8;
     let old_carry: u8 = match self.reg.check_flag(&Flag::CarryFlag) {
       true => 1,
       false => 0,
@@ -216,7 +235,7 @@ impl Jump for OpcodeDecoder<'_> {
 
   fn jr(&mut self, condition: bool, byte: u8) {
     let current_pc = self.reg.pc as u16;
-    let next = (current_pc as i32 + byte as i32) as usize;
+    let next = (current_pc as i32 + (byte as i8) as i32) as usize;
         if condition {
       self.reg.set_pc(next);
     }
@@ -245,5 +264,13 @@ impl Stack for OpcodeDecoder<'_> {
     let left_byte = self.bus.fetch((self.reg.sp+1) as usize);
     self.reg.set_16bit(&reg, left_byte, right_byte);
     self.reg.sp += 2;
+  }
+}
+
+impl BitCheck for OpcodeDecoder<'_> {
+  fn check_bit(&mut self, code: RegCode, mask: u8) {
+    self.reg.set_flag(&Flag::Zero, self.reg.get_8bit(&code) & mask != mask);
+    self.reg.set_flag(&Flag::AddSubBCD, true);
+    self.reg.set_flag(&Flag::HalfCarryFlagBCD, false);
   }
 }

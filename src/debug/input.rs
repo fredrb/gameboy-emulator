@@ -2,6 +2,8 @@ use std::io::{Write, stdout, stdin};
 
 pub enum CommandType {
   Breakpoint,
+  BreakpointList,
+  BreakpointRemove,
   ShowRegister,
   ShowMemory,
   Local,
@@ -10,6 +12,7 @@ pub enum CommandType {
   Continue,
   Start,
   Log,
+  Bit,
   Unkown
 }
 
@@ -27,6 +30,8 @@ impl InputCommand {
     // println!("read {}", class);
     let command_type = match class {
       "break" | "b" => CommandType::Breakpoint,
+      "bs" | "blist" => CommandType::BreakpointList,
+      "br" | "bremove" => CommandType::BreakpointRemove,
       "reg" | "r" => CommandType::ShowRegister,
       "mem" | "m" => CommandType::ShowMemory,
       "local" | "lc" => CommandType::Local,
@@ -35,6 +40,7 @@ impl InputCommand {
       "continue" | "c" => CommandType::Continue,
       "start" | "s" => CommandType::Start,
       "log" | "l" => CommandType::Log,
+      "bit" => CommandType::Bit,
       _ => CommandType::Unkown,
     };
     let args: Vec<String> = raw.into_iter().map(|x| String::from(x)).collect();

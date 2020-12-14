@@ -1,6 +1,17 @@
 use crate::{debug::logger::LogMessage, mmu::VirtualMemory, reg::RegCode, reg::{Flag, Registers}};
 use crate::cpu::opcode::*;
 
+pub enum BitMasks {
+  Bit0 = 0b1,
+  Bit1 = 0b10,
+  Bit2 = 0b100,
+  Bit3 = 0b1000,
+  Bit4 = 0b10000,
+  Bit5 = 0b100000,
+  Bit6 = 0b1000000,
+  Bit7 = 0b10000000,
+}
+
 pub struct OpcodeDecoder<'tick> {
   pub bus: &'tick mut VirtualMemory,
   pub reg: &'tick mut Registers,
@@ -163,6 +174,15 @@ impl OpcodeDecoder<'_> {
       0x7E => self.ld(RegCode::A, self.reg.get_16bit(&RegCode::HL) as usize),
       0x7F => self.ld(RegCode::A, self.reg.a),
 
+      0xA8 => self.xor(RegCode::B),
+      0xA9 => self.xor(RegCode::C),
+      0xAA => self.xor(RegCode::D),
+      0xAB => self.xor(RegCode::E),
+      0xAC => self.xor(RegCode::H),
+      0xAD => self.xor(RegCode::L),
+      0xAE => self.xor(self.reg.get_16bit(&RegCode::HL) as usize),
+      0xAF => self.xor(RegCode::A),
+
       0x20 | 0x30 | 0x81 | 0x82 | 0x83 => {
         let byte = self.read_next_8bit();
         match opcode {
@@ -220,11 +240,17 @@ impl OpcodeDecoder<'_> {
       0xE1 => self.pop(RegCode::BC),
       0xF1 => self.pop(RegCode::BC),
 
-      0xCB => {
-        
-      }
-      // 0xCB => self.prefixed_opcode(bus),
-      _ => ()
+      0xCB => self.prefixed_opcode(),
+      _ => panic!("Unimplemented code: {:#04x}", opcode)
     };
+  }
+
+  pub fn prefixed_opcode(&mut self) {
+    let next_byte = self.fetch_post_increment();
+    match next_byte {
+      0x11 => self.rl(RegCode::C),
+      0x7C => self.check_bit(RegCode::H, BitMasks::Bit7 as u8),
+      _ => (),
+    }
   }
 }

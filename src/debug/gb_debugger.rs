@@ -100,7 +100,35 @@ impl Debuggable for Gameboy {
             escape = true;
           },
           super::input::CommandType::Start => self.terminal.print_message(MessageType::Bad, "Command not allowed at this stage"),
-          super::input::CommandType::Unkown => self.terminal.print_message(MessageType::Bad, "Unkown command")
+          super::input::CommandType::Unkown => self.terminal.print_message(MessageType::Bad, "Unkown command"),
+          super::input::CommandType::Bit => {
+            match command.args.get(0) {
+              Some(s) => {
+                let r = match s.as_str() {
+                  "a" => Some(self.cpu.reg.a),
+                  "f" => Some(self.cpu.reg.f),
+                  "b" => Some(self.cpu.reg.b),
+                  "c" => Some(self.cpu.reg.c),
+                  "d" => Some(self.cpu.reg.d),
+                  "h" => Some(self.cpu.reg.h),
+                  "l" => Some(self.cpu.reg.l),
+                  _ => None
+                };
+                match r {
+                  Some(v) => self.terminal.print_message(MessageType::Normal, &format!("{:#08b}", v)),
+                  None => self.terminal.print_message(MessageType::Bad, "Unrecognized register code")
+                }
+              }
+              None => self.terminal.print_message(MessageType::Bad, "Please provide a valid register"),
+            }
+          }
+          super::input::CommandType::BreakpointList => {
+            self.terminal.print_breakpoints(&self.state.breakpoints);
+          }
+          super::input::CommandType::BreakpointRemove => {
+            let index = self.state.args_to_u16(&command);
+            self.state.breakpoints.remove(index as usize);
+          }
       }
     }
   }

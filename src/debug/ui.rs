@@ -73,4 +73,10 @@ impl Terminal {
     println!("{}: {:#06x}", style("SP").bold(), registers.sp);
     println!("{}: {:#06x}", style("PC").bold(), registers.pc);
   }
+
+  pub fn print_breakpoints(&self, breakpoints: &Vec<u16>) {
+    for b in 0..breakpoints.len() {
+      println!("{}: [{:#06x}]", b, breakpoints[b]);
+    }
+  }
 }
