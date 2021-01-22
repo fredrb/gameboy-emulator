@@ -66,7 +66,12 @@ impl Debuggable for Gameboy {
           super::input::CommandType::ShowRegister => self.terminal.print_registers(&self.cpu.reg),
           super::input::CommandType::ShowMemory => {
             let since = self.state.args_to_u16(&command) as usize;
-            self.terminal.print_memory(since - 5, &self.mmu.data[(since-5)..(since+5)], 5);
+            // let rem = 
+            let rem = match self.mmu.data.len() - since {
+              x if x > 5 => 5,
+              x => x
+            };
+            self.terminal.print_memory(since - 5, &self.mmu.data[(since-5)..(since+rem)], 5);
           },
           super::input::CommandType::Local => {
             let lower_bound = match self.cpu.reg.pc {
@@ -128,6 +133,9 @@ impl Debuggable for Gameboy {
           super::input::CommandType::BreakpointRemove => {
             let index = self.state.args_to_u16(&command);
             self.state.breakpoints.remove(index as usize);
+          }
+          super::input::CommandType::Help => {
+
           }
       }
     }

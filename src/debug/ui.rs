@@ -69,6 +69,7 @@ impl Terminal {
   pub fn print_registers(&self, registers: &Registers) {
     println!("{}: {:#04x} {:#04x} ({:08b})", style("AF").bold(), registers.a, registers.f, registers.f);
     println!("{}: {:#04x} {:#04x}", style("BC").bold(), registers.b, registers.c);
+    println!("{}: {:#04x} {:#04x}", style("DE").bold(), registers.d, registers.e);
     println!("{}: {:#04x} {:#04x}", style("HL").bold(), registers.h, registers.l);
     println!("{}: {:#06x}", style("SP").bold(), registers.sp);
     println!("{}: {:#06x}", style("PC").bold(), registers.pc);

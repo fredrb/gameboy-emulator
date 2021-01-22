@@ -77,6 +77,19 @@ impl Registers {
     };
   }
 
+  pub fn inc_16bit(&mut self, code: &RegCode) {
+    let byte = self.get_16bit(code).wrapping_add(1);
+    // self.set_flag(&Flag::HalfCarryFlagBCD, byte & 0xF == 0);
+    // self.set_flag(&Flag::Zero, byte == 0);
+    // self.set_flag(&Flag::AddSubBCD, false);
+    self.set_16bit(code, (byte >> 8) as u8, (byte & 0x00FF) as u8);
+  }
+
+  pub fn dec_16bit(&mut self, code: &RegCode) {
+    let byte = self.get_16bit(code).wrapping_sub(1);
+    self.set_16bit(code, (byte >> 8) as u8, (byte & 0x00FF) as u8);
+  }
+
   pub fn inc_8bit(&mut self, code: &RegCode) {
     let byte = self.get_8bit(code).wrapping_add(1);
     self.set_flag(&Flag::HalfCarryFlagBCD, byte & 0xF == 0);
@@ -104,8 +117,8 @@ impl Registers {
     self.set_flag(&Flag::Zero, current_value == 0);
     self.set_flag(&Flag::AddSubBCD, false);
     self.set_16bit(&RegCode::HL, 
-      (current_value & 0xF0) as u8,
-       (current_value & 0x0F) as u8);
+      ((current_value & 0xFF00) >> 8) as u8,
+       (current_value & 0xFF) as u8);
   }
 
   pub fn dec_hl(&mut self) {
@@ -140,6 +153,7 @@ impl Registers {
         RegCode::DE => {self.d = left_byte; self.e = right_byte}
         RegCode::HL => {self.h = left_byte; self.l = right_byte}
         RegCode::SP => {self.sp = Registers::_8bit_to_16bit(left_byte, right_byte)}
+        RegCode::PC => {self.pc = Registers::_8bit_to_16bit(left_byte, right_byte) as usize}
         _ => panic!("This operation only supports 16bit regiters")
     }
   }

@@ -31,7 +31,7 @@ impl OpcodeDecoder<'_> {
 
   fn read_next_addr(&mut self) -> usize {
     let b = self.read_next_16bits();
-    return (((b.0 as u16) << 8) & (b.1 as u16)) as usize;
+    return (((b.0 as u16) << 8) + (b.1 as u16)) as usize;
   }
 
   pub fn fetch_post_increment(&mut self) -> u8 {
@@ -60,6 +60,16 @@ impl OpcodeDecoder<'_> {
       0x22 => self.ldi(self.reg.get_16bit(&RegCode::HL) as usize, RegCode::A),
       0x32 => self.ldd(self.reg.get_16bit(&RegCode::HL) as usize, RegCode::A),
 
+      0x03 => self.reg.inc_16bit(&RegCode::BC),
+      0x13 => self.reg.inc_16bit(&RegCode::DE),
+      0x23 => self.reg.inc_hl(),
+      0x33 => self.reg.inc_16bit(&RegCode::SP),
+
+      0x0B => self.reg.dec_16bit(&RegCode::BC),
+      0x1B => self.reg.dec_16bit(&RegCode::DE),
+      0x2B => self.reg.dec_hl(),
+      0x3B => self.reg.dec_16bit(&RegCode::SP),
+    
       0x04 => self.inc(RegCode::B),
       0x14 => self.inc(RegCode::D),
       0x24 => self.inc(RegCode::H),
@@ -104,7 +114,6 @@ impl OpcodeDecoder<'_> {
           _ => (),
         }
       }
-      
 
       0x40 => self.ld(RegCode::B, self.reg.b),
       0x41 => self.ld(RegCode::B, self.reg.c),
@@ -211,17 +220,26 @@ impl OpcodeDecoder<'_> {
         let byte = self.read_next_8bit();
         match opcode {
           0xE0 => self.ldh(byte as usize, RegCode::A),
-      0xF0 => self.ldh(RegCode::A, byte as usize),
+          0xF0 => self.ldh(RegCode::A, byte as usize),
           _ => (),
         }
       }
       0xE2 => self.ldh(self.reg.get_8bit(&RegCode::C) as usize, RegCode::A),
       0xEF => self.ldh(RegCode::A, self.reg.get_8bit(&RegCode::C) as usize),
 
+      0xEA | 0xFA => {
+        let addr = self.read_next_addr();
+        match opcode {
+          0xEA => self.ld(addr, RegCode::A),
+          0xFA => self.ld(RegCode::A, addr),
+          _ => (),
+        }
+      }
+
       0xCD | 0xCC | 0xDC | 0xC4 | 0xD4 => {
         let addr = self.read_next_addr();
         match opcode {
-          0xCD => self.call(true,addr),
+          0xCD => self.call(true, addr),
           0xCC => self.call(self.reg.check_flag(&Flag::Zero), addr),
           0xDC => self.call(self.reg.check_flag(&Flag::CarryFlag), addr),
           0xC4 => self.call(!self.reg.check_flag(&Flag::Zero), addr),
@@ -240,7 +258,15 @@ impl OpcodeDecoder<'_> {
       0xE1 => self.pop(RegCode::BC),
       0xF1 => self.pop(RegCode::BC),
 
+      0xC9 => self.ret(),
+
       0xCB => self.prefixed_opcode(),
+
+      0xFE => {
+        let next = self.read_next_8bit();
+        self.cp(next);
+      }
+
       _ => panic!("Unimplemented code: {:#04x}", opcode)
     };
   }

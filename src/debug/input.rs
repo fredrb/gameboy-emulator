@@ -13,7 +13,8 @@ pub enum CommandType {
   Start,
   Log,
   Bit,
-  Unkown
+  Unkown,
+  Help,
 }
 
 pub struct InputCommand {
@@ -41,6 +42,7 @@ impl InputCommand {
       "start" | "s" => CommandType::Start,
       "log" | "l" => CommandType::Log,
       "bit" => CommandType::Bit,
+      "h" | "help" => CommandType::Help,
       _ => CommandType::Unkown,
     };
     let args: Vec<String> = raw.into_iter().map(|x| String::from(x)).collect();

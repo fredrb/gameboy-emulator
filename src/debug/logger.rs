@@ -89,6 +89,7 @@ impl Logger {
       LogEvents::Tick => self.print_debug(msg.1),
       LogEvents::MemoryFetch => self.print_debug(msg.1),
       LogEvents::MemorySave => self.print_debug(msg.1),
+      LogEvents::Register => self.print_debug(msg.1),
       LogEvents::DebugLoggerOn => self.debug_logger = true,
       LogEvents::DebugLoggerOff => self.debug_logger = false,
       _ => ()
